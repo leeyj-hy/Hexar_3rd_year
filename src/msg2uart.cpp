@@ -17,6 +17,8 @@
 #define STEER_MAX 1.5708
 #define STEER_MIN -1.5708
 
+#define RPM_CONST 6.44
+
 using namespace std;
 using namespace ros;
 
