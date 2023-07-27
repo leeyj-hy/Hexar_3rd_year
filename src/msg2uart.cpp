@@ -6,6 +6,7 @@
 #include <string>
 #include "ros/ros.h"
 #include "geometry_msgs/Twist.h"
+#include "crcModbus.h"
 
 #define RAD2DEG 57.2958
 #define _PI 3.141592
@@ -20,6 +21,8 @@ using namespace std;
 using namespace ros;
 
 uint8_t buf[6];
+uint8_t buf_tmp[4];
+unsigned short crc;
 Serial driver("/dev/ttyUSB0", 115200);
 
 union tmp_data
@@ -50,7 +53,7 @@ class Converter
     cmd cmd_kin;
     geometry_msgs::Twist tmp_pub;
 
-
+    
     
   public:
     Converter()
@@ -114,11 +117,11 @@ inline void Converter::CurrentValPub()
   buf[1] = 0xFF;
   buf[2] = cmd_obj.lin_vel;
   buf[3] = cmd_obj.lin_vel >> 8;
-  // buf[4] = cmd_obj.lin_vel < 0 ? 0xFF : 0x00;
-  // buf[5] = cmd_obj.lin_vel <0 ? 0xFF : 0x00;
-
   buf[4] = tmp_data;
   buf[5] = tmp_data >> 8;
+
+  crc = crc_modbus(&buf[2], 4);
+  memcpy(&buf[6], (char*)&crc, 2);
   // buf[6] = tmp_data < 0 ? 0xFF : 0x00;
   // buf[7] = tmp_data < 0 ? 0xFF : 0x00;
 
