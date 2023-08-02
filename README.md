@@ -3,7 +3,8 @@
 ## 0. 개요
 
 상위 PC 로봇제어용 ROS PACKAGE
-ROS node 상에서 Bicycle Kinematic Model을 활용해 제어 가능
+ROS node 상에서 Bicycle Kinematic Model을 활용해 제어 가능 [Bicycle Kinematic Model Notion Link](https://www.notion.so/HEXAR-Controller-Design-ee6a99a0626041b8bf96f3e370c73c39?pvs=4)
+
 ![image](https://github.com/leeyj-hy/Hexar_3rd_year/assets/82855221/1e2a70cc-35cc-479e-9970-a44291293941)
 
 아래 사진의 붉은 색 점선 박스의 부분이 현재 repository에 해당.
