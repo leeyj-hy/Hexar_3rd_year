@@ -41,14 +41,81 @@ ex)
 
 - HEAD
 - HEAD
-- L_Vel
-- L_Vel
-- A_Vel
-- A_Vel
-- CRC
-- CRC
+- L_Value (h)
+- L_Value (l)
+- A_Value (h)
+- A_Value (l)
+- CRC (h)
+- CRC (l)
 
-#### 2.2.2. Example
+##### 단위
+L_Value 의 경우, RPM의 단위를 사용 (1 LSB = 1 RPM)
+A_Value 의 경우, DEG의 단위를 사용 (1 LSB = 1 DEG)
+
+#### 2.2.2. UART Example
+
+선속도 50RPM, 각도 30도를 전송
+
+- `0xFF` - Start of UART custom Frame 1
+- `0xFF` - Start of UART custom Frame 2
+- `0x32` - Linear Value 1
+- `0x00` - Linear Value 2 (0x0032 = 50 (DEC))
+- `0x1E` - Angular Value 1
+- `0x00` - Angular Value 2 (0x001E = 30 (DEC))
+- `0x07` - CRC-16 Modbus 1
+- `0x3C` - CRC-16 Modbus 2 (Only including Data section of Frame)
+
+#### 2.2.3. ROS Node
+
+    class Converter
+    {
+        private:
+            NodeHandle n;
+            Subscriber MsgSub;
+            Publisher MsgPub;
+    
+            cmd cmd_obj;
+            cmd cmd_kin;
+            geometry_msgs::Twist tmp_pub;
+
+          public:
+            Converter()
+              {
+                MsgSub = n.subscribe("/cmd_vel", 1, &Converter::CmdReqCallback, this);
+                MsgPub = n.advertise<geometry_msgs::Twist>("/CurrentValRet", 10);
+              }
+            geometry_msgs::Twist cmd_vel;
+            
+            void CmdReqCallback(const geometry_msgs::Twist &vel_msg);
+            void CurrentValPub();
+            
+            void KinematicModel(cmd cmd_input);
+    };
+
+ROS Node의 경우 크게 두 부분으로 구성된다.
+
+    MsgSub = n.subscribe("/cmd_vel", 1, &Converter::CmdReqCallback, this);
+
+와
+
+    MsgPub = n.advertise<geometry_msgs::Twist>("/CurrentValRet", 10);
+
+로 구성되어 있다.
+
+subscriber의 경우, 상위 노드에서 Publish 하는 `/cmd_vel` 을 수신하고 Callback 함수를 호출하여 `Geometry_msgs/Twist`로 작성된 로봇 이동 명령을 각각 클래스 구조체의 `cmd.ang_vel` 과 `cmd.lin_vel`에 저장하게 된다.
+
+또한, Sub node에서 호출되는 `Converter::KinematicModel()`은 ros node는 아니지만 Bicycle Kinematic Model 을 활용하여 수신된 선속도, 각속도를 각각 실제 인휠모터와 조향모터를 조작하는 값으로 변환시켜주는 `void KinematicModel(cmd cmd_input);`을 볼 수 있다.
+
+다음으로 `KinematicModel(cmd)` 함수를 거친 후에 `void CurrentValPub()` 함수에서는 앞서 계산된 RPM과 조향각을 각각 UART Frame에 대입시키고 CRC를 계산하여 UART Communication Frame을 완성시킨다.
 
 
+     buf[0] = 0xFF;
+     buf[1] = 0xFF;
+     buf[2] = cmd_obj.lin_vel;
+     buf[3] = cmd_obj.lin_vel >> 8;
+     buf[4] = tmp_data;
+     buf[5] = tmp_data >> 8;
+     
+     crc = crc_modbus(&buf[2], 4);
+     memcpy(&buf[6], (char*)&crc, 2);
 
