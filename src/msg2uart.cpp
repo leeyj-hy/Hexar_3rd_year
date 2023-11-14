@@ -25,7 +25,7 @@ using namespace ros;
 uint8_t buf[6];
 uint8_t buf_tmp[4];
 unsigned short crc;
-Serial driver("/dev/ttyUSB0", 115200);
+Serial driver("/dev/ttyACM0", 115200);
 
 union tmp_data
 {
